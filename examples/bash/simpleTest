@@ -10,4 +10,6 @@ function sendCommand() {
 }
 
 
-sendCommand V
+for v in `sendCommand V`; do
+	echo "Value=$v"
+done
