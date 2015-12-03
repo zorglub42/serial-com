@@ -1,5 +1,30 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+
+#--------------------------------------------------------
+ # Module Name : socket server
+ # Version : 1.0.0
+ #
+ # Software Name : SerialCom
+ # Version : 1.0
+ #
+ # Copyright (c) 2015 Zorglub42
+ # This software is distributed under the Apache 2 license
+ # <http://www.apache.org/licenses/LICENSE-2.0.html>
+ #
+ #--------------------------------------------------------
+ # File Name   : /usr/local/bin/arduino-controler.py
+ #
+ # Created     : 2015-12
+ # Authors     : Zorglub42 <contact(at)zorglub42.fr>
+ #
+ # Description :
+ #     Connect arduino through a serial port and allow communication
+ #		to it from a TCP socket
+ #--------------------------------------------------------
+ # History     :
+ # 1.0.0 - 2015-12-03 : Release of the file
+ #
  
 import sys
 import select
@@ -154,6 +179,8 @@ class Server:
 							
 					except socket.error, e:
 						self.sockets.remove(sock)
+						self.arduino.release();
+							
 
 #Valeurs de parametrage par defaut
 PORT=9999

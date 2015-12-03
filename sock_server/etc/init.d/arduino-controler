@@ -1,4 +1,28 @@
 #! /bin/sh
+#--------------------------------------------------------
+ # Module Name : socket server
+ # Version : 1.0.0
+ #
+ # Software Name : SerialCom
+ # Version : 1.0
+ #
+ # Copyright (c) 2015 Zorglub42
+ # This software is distributed under the Apache 2 license
+ # <http://www.apache.org/licenses/LICENSE-2.0.html>
+ #
+ #--------------------------------------------------------
+ # File Name   : /etc/init.d/arduino-controler
+ #
+ # Created     : 2015-12
+ # Authors     : Zorglub42 <contact(at)zorglub42.fr>
+ #
+ # Description :
+ #     Service controler (start'n'stop)
+ #--------------------------------------------------------
+ # History     :
+ # 1.0.0 - 2015-12-03 : Release of the file
+ #
+ 
 ### BEGIN INIT INFO
 # Provides:          arduino-controler
 # Required-Start:    $remote_fs $syslog
@@ -68,7 +92,7 @@ do_start()
 	sleep 0.5
 	ps aux | grep -v grep | grep $DAEMON>/dev/null
 	if [ $? -ne 0 ] ; then
-		tail /var/log/$NAME.log
+		tail -1 /var/log/$NAME.log
 		return 2
 	fi
 }

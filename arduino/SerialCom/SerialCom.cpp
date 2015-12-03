@@ -1,3 +1,27 @@
+/*--------------------------------------------------------
+ # Module Name : Arduino Library
+ # Version : 1.0.0
+ #
+ # Software Name : SerialCom
+ # Version : 1.0
+ #
+ # Copyright (c) 2015 Zorglub42
+ # This software is distributed under the Apache 2 license
+ # <http://www.apache.org/licenses/LICENSE-2.0.html>
+ #
+ #--------------------------------------------------------
+ # File Name   : SerialCom.h
+ #
+ # Created     : 2015-12
+ # Authors     : Zorglub42 <contact(at)zorglub42.fr>
+ #
+ # Description :
+ #     Helper class implementation
+ #--------------------------------------------------------
+ # History     :
+ # 1.0.0 - 2015-12-03 : Release of the file
+ #
+*/
 #include "SerialCom.h"
 
 #if ARDUINO >= 100
