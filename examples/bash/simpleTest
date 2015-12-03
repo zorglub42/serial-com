@@ -1,0 +1,13 @@
+#!/bin/bash
+
+
+SERVER=localhost
+PORT=9999
+
+
+function sendCommand() {
+	echo $1 | nc $SERVER $PORT
+}
+
+
+sendCommand V
