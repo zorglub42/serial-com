@@ -3,7 +3,7 @@
 git clone https://github.com/zorglub42/serial-com
 cd serial-com/sock_server
 [ -f /etc/init.d/arduino-controler ] && service arduino-controler stop
-[ -f /etc/init.d/arduino-controler ] && updaterc.d -f arduino-controler remove
+[ -f /etc/init.d/arduino-controler ] && update-rc.d -f arduino-controler remove
 cp -r * /
 update-rc.d arduino-controler defaults
 service arduino-controler start
