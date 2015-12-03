@@ -1,0 +1,18 @@
+#!/bin/bash
+DAEMON='/usr/local/bin/arduino-controler.py'
+
+#Uncomment to change Listening port (TCP). Default is 9999 
+BIND_ADDRESS=localhost
+#Uncomment to change Listening port (TCP). Default is 9999 
+#TCP_PORT=9999
+#Uncomment to change maximum number of waiting connections (TCP). Default is 5
+#QUEUE_SIZE=5
+
+#Uncomment to change serial port to connect the arduino. Default is /dev/ttyACM0
+#DEVICE=/dev/ttyACM0
+#Uncomment to change serial port baud rate. Default is 9600
+#BAUD_RATE=9600
+
+
+#Uncomment to swith in verbose mode
+VERBOSE=yes
