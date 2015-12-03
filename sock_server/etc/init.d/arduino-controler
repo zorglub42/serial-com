@@ -64,8 +64,13 @@ do_start()
 	# 
 	start-stop-daemon  --start --quiet --pidfile $PIDFILE --exec /usr/bin/python $DAEMON --test > /dev/null \
 		|| return 1
-    start-stop-daemon --start --background  --make-pidfile --pidfile $PIDFILE  --startas /bin/bash -- -c "exec $DAEMON $DAEMON_ARGS >> /var/log/$NAME.log 2>&1" \
-		|| return 2
+	start-stop-daemon --background --start   --make-pidfile --pidfile $PIDFILE  --startas /bin/bash -- -c "exec $DAEMON $DAEMON_ARGS >> /var/log/$NAME.log 2>&1 "
+	sleep 0.5
+	ps aux | grep -v grep | grep $DAEMON>/dev/null
+	if [ $? -ne 0 ] ; then
+		tail /var/log/$NAME.log
+		return 2
+	fi
 }
 
 #
