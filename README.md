@@ -16,4 +16,4 @@ It includes:
 
 #install arduino library
  * Download package as zip file [here](https://github.com/zorglub42/serial-com/archive/master.zip) and extract it
- * Copy the entire content of folder "SerialCom" located in "arduino" forlder of extgracted package to ...../YOUR-ARDUINO-INSTALLATION-PATH/libraries
+ * Copy the entire content of folder "SerialCom" located in "arduino" folder of extracted package to ...../YOUR-ARDUINO-INSTALLATION-PATH/libraries
