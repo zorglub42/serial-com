@@ -3,7 +3,7 @@ Is a serial communication toolkit  with an arduino
 It includes:
   * A socket server: connect the arduino at startup through serial port and manage request/restponse to it
   * An arduino library: to manage communications with the socket server
-  *examples: in PHP and bash to send request to the arduino and display responses
+  * Examples: in PHP and bash to send request to the arduino and display responses
 
 #install socket server
  * Connect as root by issuing (for example) the following command
@@ -16,4 +16,4 @@ It includes:
 
 #install arduino library
  * Download package as zip file [here](https://github.com/zorglub42/serial-com/archive/master.zip) and extract it
- * Copy the entire content of folder "SerialCom" located in "arduino" forlder of extgracted package to ...../YOUR-ARDUINO-INSTALLATION-PATH/libraries
+ * Copy the entire content of folder "SerialCom" located in "arduino" folder of extracted package to ...../YOUR-ARDUINO-INSTALLATION-PATH/libraries
