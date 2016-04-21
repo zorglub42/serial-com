@@ -103,6 +103,7 @@ class Server:
 		self.sockets.append(self.socket)
 		# Go
 		while True:
+			ln=ser.readline()
 			try:
 				# La fonction select prends trois paramètres qui sont la liste des sockets
 				# Elle renvoie 3 valeurs
@@ -115,6 +116,10 @@ class Server:
 			except socket.error, e:
 				break
  
+			for sock in writeReady:
+				if sock != self.socket and ln:
+					sock.send(ln)
+				
 			# On parcours les sockets qui ont reçus des données
 			for sock in readReady:
 				if sock == self.socket:
@@ -129,12 +134,14 @@ class Server:
 					self.nbClients += 1
 					# On ajoute le socket client dans la liste des sockets
 					self.sockets.append(client)
+				
 				else:
 					# Le client a envoyé des données, on essaye de les lire
 					try:
 						# On fait appelle à la surchage que l'on a écrite plus haut
 						data = self.receive(sock).replace("\n","").replace("\r","")
 						if data :
+							
 							#On verouille l'accès à l'arduino
 							self.arduino.acquire();
 							if self.verbose:
