@@ -93,7 +93,25 @@ class Server:
 				_hasData = False
 		return buf
  
- 
+	def sendToClient(self, ln, curClient=False):
+		try:
+			# La fonction select prends trois paramètres qui sont la liste des sockets
+			# Elle renvoie 3 valeurs
+			# 	1- La liste des sockets qui ont reçus des données
+			# 	2- La liste des sockets qui sont prêt à envoyer des données
+			#	3- Ne nous interesse pas dans notre cas
+			readReady ,writeReady, nothing = select.select(self.sockets, self.sockets, [])
+
+			for sock in writeReady:
+				if sock != self.socket and ln and sock != curClient:
+					sock.send(ln)
+		except select.error, e:
+			return
+		except socket.error, e:
+			return
+			
+			
+
  
 	# Fonction qui lance les sockets et s'occupe des clients
 	def run(self):
@@ -103,7 +121,6 @@ class Server:
 		self.sockets.append(self.socket)
 		# Go
 		while True:
-			ln=ser.readline()
 			try:
 				# La fonction select prends trois paramètres qui sont la liste des sockets
 				# Elle renvoie 3 valeurs
@@ -115,12 +132,10 @@ class Server:
 				break
 			except socket.error, e:
 				break
- 
-			for sock in writeReady:
-				if sock != self.socket and ln:
-					sock.send(ln)
+
 				
 			# On parcours les sockets qui ont reçus des données
+			noClientForward=False
 			for sock in readReady:
 				if sock == self.socket:
 					# C'est le socket serveur qui a reçus des données
@@ -134,7 +149,10 @@ class Server:
 					self.nbClients += 1
 					# On ajoute le socket client dans la liste des sockets
 					self.sockets.append(client)
-				
+					#Ne pas forwzrder de qui vient de l'arduino aux client connecter pour 
+					#laisser une chance au client qui vient de se connecter d'envoyer de donnée (prochaine iteration)
+					#avant de le considérer destinnataire forward
+					noClientForward=True
 				else:
 					# Le client a envoyé des données, on essaye de les lire
 					try:
@@ -142,7 +160,11 @@ class Server:
 						data = self.receive(sock).replace("\n","").replace("\r","")
 						if data :
 							
-							#On verouille l'accès à l'arduino
+							#On verouille l'accès à l'arduino:
+							if self.verbose:
+								print("Locking arduino")
+								sys.stdout.flush()
+
 							self.arduino.acquire();
 							if self.verbose:
 								print("TCP-CLIENT.send: " + data)
@@ -152,27 +174,37 @@ class Server:
 							
 							serial_line = ser.readline()
 							clearLine=serial_line.replace("\n","").replace("\r","")
-							while clearLine != "***START***":
+							i=0
+							#Hopefully wait for an answer in the next comming lines.....
+							while clearLine != "***START***" and i<10:
 								if self.verbose:
+									self.sendToClient(serial_line, sock)
 									print("ARDUINO.flushing: >" + clearLine + "<")
 									sys.stdout.flush()
 								serial_line = ser.readline()
 								clearLine=serial_line.replace("\n","").replace("\r","")
-							
-							serial_line = ser.readline()
-							clearLine=serial_line.replace("\n","").replace("\r","")
-							while clearLine != "***DONE***":
-								# l'arduino a envoyé qqch et que ce n'est pas la notif de fin On renvoi au client TCP ce que 
-								if clearLine != '' and clearLine !="***DONE***":
-									if self.verbose:
-										print("ARDUINO.answer: >" + clearLine + "<")
-										sys.stdout.flush()
-									sock.send(serial_line)
+								i=i+1
+								
+							if clearLine == "***START***":
 								serial_line = ser.readline()
 								clearLine=serial_line.replace("\n","").replace("\r","")
+								i=0
+								while clearLine != "***DONE***" and i<50:
+									# l'arduino a envoyé qqch et que ce n'est pas la notif de fin On renvoi au client TCP ce que 
+									if clearLine != '' and clearLine !="***DONE***":
+										if self.verbose:
+											print("ARDUINO.answer: >" + clearLine + "<")
+											sys.stdout.flush()
+										sock.send(serial_line)
+									serial_line = ser.readline()
+									clearLine=serial_line.replace("\n","").replace("\r","")
+									i=i+1
+
 							#On libere l'accès à l'arduino
-							
 							print("End connection");
+							if self.verbose:
+								print("Unlocking arduino")
+								sys.stdout.flush()
 							self.arduino.release();
 
 						# On diminu le nombre de client
@@ -185,9 +217,17 @@ class Server:
 							sys.stdout.flush()
 							
 					except socket.error, e:
+						print("socket error")
 						self.sockets.remove(sock)
 						self.arduino.release();
-							
+
+			if not noClientForward:
+
+				ln=ser.readline()
+				while ln:
+					self.sendToClient(ln)
+					ln=ser.readline()
+				
 
 #Valeurs de parametrage par defaut
 PORT=9999
