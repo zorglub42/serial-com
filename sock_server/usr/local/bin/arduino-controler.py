@@ -116,7 +116,7 @@ class Server:
 	# Fonction qui lance les sockets et s'occupe des clients
 	def run(self):
 		# On ajoute le socket serveur à la liste des sockets
-		ser = serial.Serial(self.device, self.baud, timeout=0.1)
+		ser = serial.Serial(self.device, self.baud, timeout=0.3)
 
 		self.sockets.append(self.socket)
 		# Go
@@ -176,7 +176,7 @@ class Server:
 							clearLine=serial_line.replace("\n","").replace("\r","")
 							i=0
 							#Hopefully wait for an answer in the next comming lines.....
-							while clearLine != "***START***" and i<10:
+							while clearLine != "***START***" and i<10 :
 								if self.verbose:
 									self.sendToClient(serial_line, sock)
 									print("ARDUINO.flushing: >" + clearLine + "<")
@@ -189,7 +189,7 @@ class Server:
 								serial_line = ser.readline()
 								clearLine=serial_line.replace("\n","").replace("\r","")
 								i=0
-								while clearLine != "***DONE***" and i<50:
+								while clearLine != "***DONE***" and i<10:
 									# l'arduino a envoyé qqch et que ce n'est pas la notif de fin On renvoi au client TCP ce que 
 									if clearLine != '' and clearLine !="***DONE***":
 										if self.verbose:
@@ -224,10 +224,10 @@ class Server:
 			if not noClientForward:
 
 				ln=ser.readline()
-				while ln:
-					self.sendToClient(ln)
-					ln=ser.readline()
-				
+				if ln:
+					while ln:
+						self.sendToClient(ln)
+						ln=ser.readline()
 
 #Valeurs de parametrage par defaut
 PORT=9999
