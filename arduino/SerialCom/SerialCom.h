@@ -26,12 +26,15 @@
 #define __SERIALCOM_CLASS__
 
 
+
 #include <Arduino.h>
 #if (ARDUINO >= 100)
   #include <SoftwareSerial.h>
 #else
   #include <NewSoftSerial.h>
 #endif
+
+#define COMMAND_BUFFER_SIZE 128
 
 class SerialCom : public Print{
   public:  

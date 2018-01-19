@@ -1,7 +1,7 @@
 # serial-com
 Is a serial communication toolkit  with an arduino  
 It includes:
-  * A socket server: connect the arduino at startup through serial port and manage request/restponse to it
+  * A socket server: connect the arduino at startup through serial port and manage request/response to it
   * An arduino library: to manage communications with the socket server
   * Examples: in PHP and bash to send request to the arduino and display responses
 

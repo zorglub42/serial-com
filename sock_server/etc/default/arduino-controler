@@ -1,9 +1,9 @@
 #!/bin/bash
-DAEMON='/usr/local/bin/arduino-controler.py'
+#DAEMON='/usr/local/bin/arduino_controler.py'
 
-#Uncomment to change Listening port (TCP). Default is 9999 
-BIND_ADDRESS=localhost
-#Uncomment to change Listening port (TCP). Default is 9999 
+#Uncomment to change Listening interface. Default localhost
+#BIND_ADDRESS=localhost
+#Uncomment to change Listening port (TCP). Default is 9999
 #TCP_PORT=9999
 #Uncomment to change maximum number of waiting connections (TCP). Default is 5
 #QUEUE_SIZE=5
@@ -15,4 +15,6 @@ BIND_ADDRESS=localhost
 
 
 #Uncomment to swith in verbose mode
-VERBOSE=yes
+# note: if a logs.conf file exists in /etc/arduino_controler, this paramter is
+#       overloded by the configuration in logs.conf
+#VERBOSE=yes

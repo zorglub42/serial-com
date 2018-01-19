@@ -57,12 +57,13 @@ void SerialCom::begin(uint16_t baud){
 
 void SerialCom::handleSerialCom(){
   if (this->mySerial->available()){
-    char cmd[10];
+    char cmd[COMMAND_BUFFER_SIZE];
     int i=0;
     char c=0;
     do{
       if (this->mySerial->available()){
         c=this->mySerial->read();
+        Serial.print(c);
         cmd[i++]=c;
         cmd[i]=0;
       }
@@ -70,8 +71,12 @@ void SerialCom::handleSerialCom(){
     }while (c != '\n');
     cmd[i-1]=0;
     mySerial->println(F("***START***"));
+    delay(5);
+    mySerial->flush();
     serialComHandler(cmd);
+    delay(5);
     mySerial->println(F("***DONE***"));
+    delay(5);
   }
 }  
 

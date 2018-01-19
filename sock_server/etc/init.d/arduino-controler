@@ -22,7 +22,7 @@
  # History     :
  # 1.0.0 - 2015-12-03 : Release of the file
  #
- 
+
 ### BEGIN INIT INFO
 # Provides:          arduino-controler
 # Required-Start:    $remote_fs $syslog
@@ -43,7 +43,8 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 DESC="Arduino socket server"
 NAME=arduino-controler
-DAEMON=/usr/local/bin/$NAME.py
+DAEMON=/usr/local/bin/arduino_controler.py
+BIND_ADDRESS=localhost
 
 TCP_PORT=9999
 QUEUE_SIZE=5
@@ -85,10 +86,10 @@ do_start()
 	#   0 if daemon has been started
 	#   1 if daemon was already running
 	#   2 if daemon could not be started
-	# 
+	#
 	start-stop-daemon  --start --quiet --pidfile $PIDFILE --exec /usr/bin/python $DAEMON --test > /dev/null \
 		|| return 1
-	start-stop-daemon --background --start   --make-pidfile --pidfile $PIDFILE  --startas /bin/bash -- -c "exec $DAEMON $DAEMON_ARGS >> /var/log/$NAME.log 2>&1 "
+	start-stop-daemon --background --start   --make-pidfile --pidfile $PIDFILE  --startas /bin/bash -- -c "exec $DAEMON $DAEMON_ARGS"
 	sleep 0.5
 	ps aux | grep -v grep | grep $DAEMON>/dev/null
 	if [ $? -ne 0 ] ; then
@@ -107,7 +108,7 @@ do_stop()
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
-	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE 
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE
 	RETVAL="$?"
 	[ "$RETVAL" = 2 ] && return 2
 	# Wait for children to finish too if this is a daemon that forks
