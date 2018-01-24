@@ -233,25 +233,43 @@ class Server(object):
                 data = ser.readline()
 
 
+def usage():
+    """Display usage and exit."""
+    print "usage: " + sys.argv[0] + \
+        " [-a ADDRESS]" + \
+        " [-p PORT]" + \
+        " [-d DEVICE]" + \
+        " [-b BAUD-RATE]" + \
+        " [-v]" + \
+        " [-h]"
+    print "\t-a: listening address. default=" + ADDRESS + " *=all"
+    print "\t-p: listeing port default=" + str(PORT)
+    print "\t-d: serial device default=" + DEVICE
+    print "\t-b: serial device baudrate default=" + str(BAUD_RATE)
+    print "\t-v: vebose mode (note: this paramter is overloaded by " + \
+        "/etc/arduino_controler/logs.conf when exists)"
+    print "\t-h: this text"
+    sys.exit(1)
+
+
 # Default values
-PORT = 9999
 QUEUE_SIZE = 5
+
+PORT = 9999
 DEVICE = '/dev/ttyACM0'
 BAUD_RATE = 9600
-ADDRESS = ''
+ADDRESS = 'localhost'
 
 
 def start_server():
     """Start server."""
     # pylint: disable=global-statement
     log_level = logging.INFO
-    global PORT, QUEUE_SIZE, DEVICE, BAUD_RATE, ADDRESS
+    global PORT, DEVICE, BAUD_RATE, ADDRESS
     # Parse command line parameters
     for i, arg in enumerate(sys.argv):
         if arg == '-p':
             PORT = int(sys.argv[i+1])
-        elif arg == '-q':
-            QUEUE_SIZE = int(sys.argv[i+1])
         elif arg == '-d':
             DEVICE = sys.argv[i+1]
         elif arg == '-b':
@@ -260,6 +278,10 @@ def start_server():
             log_level = logging.DEBUG
         elif arg == '-a':
             ADDRESS = sys.argv[i+1]
+            if ADDRESS == "*":
+                ADDRESS = ""
+        elif arg == '-h':
+            usage()
 
     if os.path.isfile("/etc/arduino_controler/logs.conf"):
         logging.config.fileConfig("/etc/arduino_controler/logs.conf")
@@ -272,8 +294,8 @@ def start_server():
     logging.info("Socks arduino server starting:")
     logging.info("    Device=%s", DEVICE)
     logging.info("    Baud=%d", BAUD_RATE)
+    logging.info("    Listeing=%s", ADDRESS)
     logging.info("    TCP Port=%d", PORT)
-    logging.info("    Queue Size=%d", QUEUE_SIZE)
 
     server = Server(ADDRESS, PORT, QUEUE_SIZE, DEVICE, BAUD_RATE)
     server.run()

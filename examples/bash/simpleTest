@@ -34,6 +34,6 @@ function sendCommand() {
 }
 
 
-for v in `sendCommand GPS-STATUS`; do
+for v in `sendCommand V`; do
 	echo "Value=$v"
 done
