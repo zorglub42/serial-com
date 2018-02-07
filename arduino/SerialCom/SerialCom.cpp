@@ -9,7 +9,7 @@
  # This software is distributed under the Apache 2 license
  # <http://www.apache.org/licenses/LICENSE-2.0.html>
  #
- #--------------------------------------------------------
+ ##--------------------------------------------------------
  # File Name   : SerialCom.h
  #
  # Created     : 2015-12
@@ -17,70 +17,72 @@
  #
  # Description :
  #     Helper class implementation
- #--------------------------------------------------------
+ ##--------------------------------------------------------
  # History     :
  # 1.0.0 - 2015-12-03 : Release of the file
  #
-*/
+ */
 #include "SerialCom.h"
 
+#ifdef SUPPORT_SOFTWARE_SERIAL
 #if ARDUINO >= 100
-  SerialCom::SerialCom(SoftwareSerial *sws){
-    this->isHW=0;
-    this->sws=sws;
-    this->mySerial=sws;
-  }
+SerialCom::SerialCom(SoftwareSerial *sws){
+        this->isHW=0;
+        this->sws=sws;
+        this->mySerial=sws;
+}
 #else
-  SerialCom::SerialCom(NewSoftSerial *sws){
-    this->isHW=0;
-    this->sws=sws;
-    this->mySerial=sws;
-  }
+SerialCom::SerialCom(NewSoftSerial *sws){
+        this->isHW=0;
+        this->sws=sws;
+        this->mySerial=sws;
+}
 #endif
-  SerialCom::SerialCom(HardwareSerial *hws){
-    this->isHW=1;
-    this->hws=hws;
-    this->mySerial=hws;
-  }
+#endif
+SerialCom::SerialCom(HardwareSerial *hws){
+        this->isHW=1;
+        this->hws=hws;
+        this->mySerial=hws;
+}
 
 
 
 void SerialCom::begin(uint16_t baud){
-  if (this->isHW){
-    this->hws->begin(baud);
-  }else{
-    this->sws->begin(baud);
-  }
+        if (this->isHW) {
+                this->hws->begin(baud);
+        }else{
+                this->sws->begin(baud);
+        }
 }
 
 
 
 void SerialCom::handleSerialCom(){
-  if (this->mySerial->available()){
-    char cmd[COMMAND_BUFFER_SIZE];
-    int i=0;
-    char c=0;
-    do{
-      if (this->mySerial->available()){
-        c=this->mySerial->read();
-        Serial.print(c);
-        cmd[i++]=c;
-        cmd[i]=0;
-      }
-      
-    }while (c != '\n');
-    cmd[i-1]=0;
-    mySerial->println(F("***START***"));
-    delay(5);
-    mySerial->flush();
-    serialComHandler(cmd);
-    delay(5);
-    mySerial->println(F("***DONE***"));
-    delay(5);
-  }
-}  
+        if (this->mySerial->available()) {
+                char cmd[COMMAND_BUFFER_SIZE];
+                int i=0;
+                char c=0;
+                do {
+                        if (this->mySerial->available()) {
+                                c=this->mySerial->read();
+                                Serial.print(c);
+                                cmd[i++]=c;
+                                cmd[i]=0;
+                        }
+
+                } while (c != '\n');
+                cmd[i-1]=0;
+                mySerial->println(F("***START***"));
+                delay(5);
+                mySerial->flush();
+                serialComHandler(cmd);
+                delay(5);
+                mySerial->println(F("***DONE***"));
+                delay(5);
+        }
+}
 
 
 size_t SerialCom::write(uint8_t b){
-  this->mySerial->write(b);
+        this->mySerial->write(b);
 }

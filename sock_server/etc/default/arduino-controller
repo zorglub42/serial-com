@@ -1,5 +1,5 @@
 #!/bin/bash
-#DAEMON='/usr/local/bin/arduino_controler.py'
+#DAEMON='/usr/local/bin/arduino_controller.py'
 
 #Uncomment to change Listening interface. Default localhost
 #BIND_ADDRESS=localhost
@@ -15,6 +15,6 @@
 
 
 #Uncomment to swith in verbose mode
-# note: if a logs.conf file exists in /etc/arduino_controler, this paramter is
+# note: if a logs.conf file exists in /etc/arduino_controller, this paramter is
 #       overloded by the configuration in logs.conf
 #VERBOSE=yes

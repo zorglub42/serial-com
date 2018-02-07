@@ -18,7 +18,7 @@ communication.
 # <http://www.apache.org/licenses/LICENSE-2.0.html>
 #
 # -------------------------------------------------------
-# File Name   : /usr/local/bin/arduino-controler.py
+# File Name   : /usr/local/bin/arduino_controller.py
 #
 # Created     : 2015-12
 # Authors     : Zorglub42 <contact(at)zorglub42.fr>
@@ -247,7 +247,7 @@ def usage():
     print "\t-d: serial device default=" + DEVICE
     print "\t-b: serial device baudrate default=" + str(BAUD_RATE)
     print "\t-v: vebose mode (note: this paramter is overloaded by " + \
-        "/etc/arduino_controler/logs.conf when exists)"
+        "/etc/arduino_controller/logs.conf when exists)"
     print "\t-h: this text"
     sys.exit(1)
 
@@ -283,11 +283,11 @@ def start_server():
         elif arg == '-h':
             usage()
 
-    if os.path.isfile("/etc/arduino_controler/logs.conf"):
-        logging.config.fileConfig("/etc/arduino_controler/logs.conf")
+    if os.path.isfile("/etc/arduino_controller/logs.conf"):
+        logging.config.fileConfig("/etc/arduino_controller/logs.conf")
         if log_level != logging.INFO:
             logging.warning("-v paramter may be oveloaded by"
-                            "/etc/arduino_controler/logs.conf configuration")
+                            "/etc/arduino_controller/logs.conf configuration")
     else:
         logging.basicConfig(level=log_level)
 

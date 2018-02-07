@@ -11,20 +11,20 @@
  # <http://www.apache.org/licenses/LICENSE-2.0.html>
  #
  #--------------------------------------------------------
- # File Name   : /etc/init.d/arduino-controler
+ # File Name   : /etc/init.d/arduino-controller
  #
  # Created     : 2015-12
  # Authors     : Zorglub42 <contact(at)zorglub42.fr>
  #
  # Description :
- #     Service controler (start'n'stop)
+ #     Service controller (start'n'stop)
  #--------------------------------------------------------
  # History     :
  # 1.0.0 - 2015-12-03 : Release of the file
  #
 
 ### BEGIN INIT INFO
-# Provides:          arduino-controler
+# Provides:          arduino-controller
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
@@ -42,8 +42,8 @@
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 DESC="Arduino socket server"
-NAME=arduino-controler
-DAEMON=/usr/local/bin/arduino_controler.py
+NAME=arduino-controller
+DAEMON=/usr/local/bin/arduino_controller.py
 BIND_ADDRESS=localhost
 
 TCP_PORT=9999

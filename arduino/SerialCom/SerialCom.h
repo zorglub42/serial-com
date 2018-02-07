@@ -9,7 +9,7 @@
  # This software is distributed under the Apache 2 license
  # <http://www.apache.org/licenses/LICENSE-2.0.html>
  #
- #--------------------------------------------------------
+ ###--------------------------------------------------------
  # File Name   : SerialCom.h
  #
  # Created     : 2015-12
@@ -17,48 +17,56 @@
  #
  # Description :
  #     Helper class defintion
- #--------------------------------------------------------
+ ###--------------------------------------------------------
  # History     :
  # 1.0.0 - 2015-12-03 : Release of the file
  #
-*/
+ */
 #ifndef __SERIALCOM_CLASS__
 #define __SERIALCOM_CLASS__
 
 
 
 #include <Arduino.h>
+#ifdef SUPPORT_SOFTWARE_SERIAL
 #if (ARDUINO >= 100)
   #include <SoftwareSerial.h>
 #else
   #include <NewSoftSerial.h>
 #endif
+#endif
 
 #define COMMAND_BUFFER_SIZE 128
 
-class SerialCom : public Print{
-  public:  
+class SerialCom : public Print {
+public:
+    #ifdef SUPPORT_SOFTWARE_SERIAL
     #if ARDUINO >= 100
-      SerialCom(SoftwareSerial *);
+SerialCom(SoftwareSerial *);
     #else
-      SerialCom(NewSoftSerial *);
+SerialCom(NewSoftSerial *);
     #endif
-      SerialCom(HardwareSerial *);
-      void begin(uint16_t baud);
-      void handleSerialCom();
-      virtual size_t write(uint8_t);
-      
-      
-   private:
-      #if ARDUINO >= 100
-        SoftwareSerial *sws;
+    #endif
+SerialCom(HardwareSerial *);
+void begin(uint16_t baud);
+void handleSerialCom();
+virtual size_t write(uint8_t);
+
+
+private:
+      #ifdef SUPPORT_SOFTWARE_SERIAL
+        #if ARDUINO >= 100
+SoftwareSerial *sws;
+        #else
+NewSoftSerial *sws;
+        #endif
       #else
-        NewSoftSerial *sws;
+HardwareSerial *sws;
       #endif
-      uint8_t isHW;
-      HardwareSerial *hws;
-      Stream *mySerial;
-   
+uint8_t isHW;
+HardwareSerial *hws;
+Stream *mySerial;
+
 };
 
 void serialComHandler(char* command);
