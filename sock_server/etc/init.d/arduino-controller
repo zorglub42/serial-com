@@ -65,7 +65,7 @@ if [ "$VERBOSE" != "yes" ] ; then
 else
 	VFLAG=-v
 fi
-DAEMON_ARGS="-p $TCP_PORT -q $QUEUE_SIZE -d $DEVICE -b $BAUD_RATE -a $BIND_ADDRESS $VFLAG"
+DAEMON_ARGS="-p $TCP_PORT -q $QUEUE_SIZE -d $DEVICE -b $BAUD_RATE -a '$BIND_ADDRESS' $VFLAG"
 
 
 
@@ -93,7 +93,7 @@ do_start()
 	sleep 0.5
 	ps aux | grep -v grep | grep $DAEMON>/dev/null
 	if [ $? -ne 0 ] ; then
-		tail -1 /var/log/$NAME.log
+		echo $NAME is not started
 		return 2
 	fi
 }
