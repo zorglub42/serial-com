@@ -65,19 +65,19 @@ void SerialCom::handleSerialCom(){
                 do {
                         if (this->mySerial->available()) {
                                 c=this->mySerial->read();
-                                Serial.print(c);
+                                //Serial.print(c);
                                 cmd[i++]=c;
                                 cmd[i]=0;
                         }
 
                 } while (c != '\n');
                 cmd[i-1]=0;
-                mySerial->println(F("***START***"));
+                mySerial->println(F("\n***START***"));
                 delay(5);
                 mySerial->flush();
                 serialComHandler(cmd);
                 delay(5);
-                mySerial->println(F("***DONE***"));
+                mySerial->println(F("\n***DONE***"));
                 delay(5);
         }
 }

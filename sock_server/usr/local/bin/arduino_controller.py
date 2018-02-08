@@ -69,7 +69,7 @@ def socket_receive(client_socket):
     return buf
 
 
-class Server(object):
+class Server(object):  # pylint: disable=too-many-instance-attributes
     """TCP gateway to arduino via serial connection."""
 
     # pylint: disable=too-many-arguments
@@ -86,16 +86,15 @@ class Server(object):
 
         self.device = device
         self.baud = baud
+        self.address = address
+        self.port = port
+        self.listen = listen
 
         # Creating server
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # Use socket as non blocking
         self.socket.setblocking(0)
-        # Bind socket to listening port
-        self.socket.bind((address, port))
-        # Start listeing with the proper Q size
-        self.socket.listen(listen)
 
         # Creating Semaphore to protect arduino access
         self.arduino = threading.BoundedSemaphore(1)
@@ -176,15 +175,48 @@ class Server(object):
             self.sockets.remove(sock)
             self.arduino.release()
 
+    def open_serial(self):
+        """Open serial (ensure it's here)."""
+        ser = None
+        ser_was_not_here = False
+        while not ser:
+            self.logger.debug("Trying to open serial port %s", self.device)
+            try:
+                ser = serial.Serial(self.device, self.baud, timeout=0.1)
+                if ser_was_not_here:
+                    # Workaround to give time to USB/Serial to come up
+                    # With arduino.org it's longer than arduino.cc
+                    self.logger.debug(
+                        "Serial device found, waiting to come up")
+                    time.sleep(30)
+                    ser.close()
+                    self.logger.debug("Re-opening device")
+                    ser = serial.Serial(self.device, self.baud, timeout=0.1)
+
+            except serial.SerialException as exc:
+                if exc.errno == 2:  # No such file or directory
+                    self.logger.error(
+                        "Device %s does not exists.... waiting....",
+                        self.device)
+                    ser_was_not_here = True
+                    time.sleep(1)
+                else:
+                    raise exc
+        self.logger.info("Serial port %s opened", self.device)
+        return ser
+
     def run(self):
         """Run server.
 
         Main code for server implem.
         """
         # Open connection to the Serial device
-        ser = serial.Serial(self.device, self.baud, timeout=0.1)
-        # and give time to the rduino to boot
-        time.sleep(5)
+        ser = self.open_serial()
+        # Bind socket to listening port
+        self.socket.bind((self.address, self.port))
+        # Start listeing with the proper Q size
+        self.socket.listen(self.listen)
+        self.logger.debug("Sock server started")
 
         # Add server socket to socket list
         self.sockets.append(self.socket)
