@@ -116,6 +116,7 @@ class Server(object):  # pylint: disable=too-many-instance-attributes
 
     def wait_for_response(self, sock, ser, clear_line):
         """Drop arduino data until response marker."""
+
         serial_line = ser.readline()
         clear_line = serial_line.replace("\n", "").replace("\r", "")
         while clear_line != "***START***":
@@ -259,10 +260,9 @@ class Server(object):  # pylint: disable=too-many-instance-attributes
             # At least,
             # Forward data comming from serial device to connected clients
             # still connected
-            data = ser.readline()
-            while data:
-                self.send_to_clients(data)
+            while ser.in_waiting:
                 data = ser.readline()
+                self.send_to_clients(data)
 
 
 def usage():
