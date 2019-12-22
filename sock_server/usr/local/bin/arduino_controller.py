@@ -61,7 +61,7 @@ def socket_receive(client_socket):
         try:
             _data = client_socket.recv(256)
             if _data:
-                buf += _data
+                buf += _data.decode()
             else:
                 _has_data = False
         except Exception:  # pylint: disable=broad-except
@@ -69,114 +69,112 @@ def socket_receive(client_socket):
     return buf
 
 
-class Server(object):  # pylint: disable=too-many-instance-attributes
+class ArduinoLink(threading.Thread):  # pylint: disable=too-many-instance-attributes
     """TCP gateway to arduino via serial connection."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, address='', port=9999, listen=5,
-                 device='/dev/ttyACM0', baud=9600):
-        """Create Server class instance.
-
-        @param port Listeing port
-        @param listen Waiting connection queue size
-        @param device Port serial port to communicate with the arduino
-        @param baud Serial baud rate
+    def __init__(self, device='/dev/ttyACM0', baud=9600):
+        """Create AdruinoLink instance
+        
+        Keyword Arguments:
+            device {str} -- Serial port (default: {'/dev/ttyACM0'})
+            baud {int} -- Baud rate (default: {9600})
+            on_message {function} -- Callback to invoke when reveive msg.
         """
-        self.sockets = []    # Connected clients socket list
+        threading.Thread.__init__(self)
 
         self.device = device
         self.baud = baud
-        self.address = address
-        self.port = port
-        self.listen = listen
-
-        # Creating server
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # Use socket as non blocking
-        self.socket.setblocking(0)
+        self.ser = None
+        self.running = False
 
         # Creating Semaphore to protect arduino access
         self.arduino = threading.BoundedSemaphore(1)
 
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    def send_to_clients(self, data, cur_client=False):
-        """Send data to connected clients."""
-        try:
-            _, write, _ = select.select(self.sockets, self.sockets, [])
+    def on_start(self):
+        """Execute code when ArduinoLink is starting.
+        """
+        None
 
-            for sock in write:
-                if sock != self.socket and data and sock != cur_client:
-                    sock.send(data)
-        except select.error:
-            return
-        except socket.error:
-            return
+    def on_stop(self):
+        """Execute code when ArduinoLink is stoping.
+        """
+        None
 
-    def wait_for_response(self, sock, ser, clear_line):
+    def on_message_received(self, message):
+        """Invocked when message received from Arduino
+        Abstract method to implement. 
+        
+        Arguments:
+            message {string} -- Message received form the arduino
+        """
+        raise NotImplementedError("on_message_received")
+
+    def _wait_for_response(self):
         """Drop arduino data until response marker."""
 
-        serial_line = ser.readline()
+        serial_line = self.ser.readline().decode()
         clear_line = serial_line.replace("\n", "").replace("\r", "")
         while clear_line != "***START***":
-            self.send_to_clients(serial_line, sock)
+            if clear_line:
+                self.on_message_received(serial_line)
             self.logger.debug("ARDUINO.flushing: >%s<", clear_line)
-            serial_line = ser.readline()
-            clear_line = serial_line.replace("\n",
-                                             "").replace("\r", "")
+            serial_line = self.ser.readline().decode()
+            clear_line = serial_line.replace(
+                "\n",
+                ""
+            ).replace("\r", "")
         return clear_line
 
-    def manage_client_request(self, sock, ser):
-        """Manage requests from TCP client."""
-        try:
-            data = socket_receive(sock).replace("\n", "").replace("\r", "")
-            if data:
+    def send_request(self, request):
+        """Send a request to the arduino.
 
-                self.logger.debug("Locking arduino")
+        Arguments:
+            request {string} -- Request to send
+        """
 
-                # Locking arduino
-                self.arduino.acquire()
-                self.logger.debug("TCP-CLIENT.send: %s", data)
+        self.logger.debug("Locking arduino")
 
-                ser.write(data + "\n")
-                ser.flush()
+        # Locking arduino
+        self.arduino.acquire()
+        res = []
+        self.logger.debug("CLIENT.send: %s", request)
 
-                # Hopefully, wait for an answer in the next comming lines.....
-                clear_line = ""
-                clear_line = self.wait_for_response(sock, ser, clear_line)
+        self.ser.write((request + "\n").encode())
+        self.ser.flush()
 
-                # clear_line contains begin of answer marker
-                # read the first line of the answer
-                serial_line = ser.readline()
-                clear_line = serial_line.replace("\n",
-                                                 "").replace("\r", "")
-                while clear_line != "***DONE***":
-                    # Data send bny arduino is not the end of request
-                    # marker: send data to client
-                    if clear_line != '':
-                        self.logger.debug("ARDUINO.answer: >%s<", clear_line)
-                        sock.send(serial_line)
-                    serial_line = ser.readline()
-                    clear_line = serial_line.replace("\n",
-                                                     "").replace("\r", "")
+        # Hopefully, wait for an answer in the next comming lines.....
+        clear_line = ""
+        clear_line = self._wait_for_response()
 
-                self.logger.info("End connection")
-                # Unlocking arduino
-                self.logger.debug("Unlocking arduino")
-                self.arduino.release()
+        # clear_line contains begin of answer marker
+        # read the first line of the answer
+        serial_line = self.ser.readline().decode()
+        clear_line = serial_line.replace(
+            "\n",
+            ""
+        ).replace("\r", "")
+        while clear_line != "***DONE***":
+            # Data send bny arduino is not the end of request
+            # marker: send data to client
+            if clear_line != '':
+                self.logger.debug("ARDUINO.answer: >%s<", clear_line)
+                res.append(serial_line)
+            serial_line = self.ser.readline().decode()
+            clear_line = serial_line.replace(
+                "\n",
+                ""
+            ).replace("\r", "")
 
-            sock.close()
-            # Remove client socket from the list of connected clients
-            self.sockets.remove(sock)
-            self.logger.debug("TCP-CLIENT.disconnect: ")
+        self.logger.info("End connection")
+        # Unlocking arduino
+        self.logger.debug("Unlocking arduino")
+        self.arduino.release()
+        return res
 
-        except socket.error:
-            self.logger.exception("socket error")
-            self.sockets.remove(sock)
-            self.arduino.release()
-
-    def open_serial(self):
+    def _open_serial(self):
         """Open serial (ensure it's here)."""
         ser = None
         ser_was_not_here = False
@@ -189,13 +187,13 @@ class Server(object):  # pylint: disable=too-many-instance-attributes
                     # With arduino.org it's longer than arduino.cc
                     self.logger.debug(
                         "Serial device found, waiting to come up")
-                    time.sleep(30)
+                    time.sleep(1)
                     ser.close()
                     self.logger.debug("Re-opening device")
                     ser = serial.Serial(self.device, self.baud, timeout=0.1)
 
             except serial.SerialException as exc:
-                if exc.errno == 2:  # No such file or directory
+                if exc.errno == 2 or exc.errno == 13:  # No such file or directory
                     self.logger.error(
                         "Device %s does not exists.... waiting....",
                         self.device)
@@ -203,6 +201,17 @@ class Server(object):  # pylint: disable=too-many-instance-attributes
                     time.sleep(1)
                 else:
                     raise exc
+        ready = False
+        while not ready:
+            if ser.in_waiting:
+                data = ser.readline().decode().replace(
+                    "\n",
+                    ""
+                ).replace(
+                    "\r",
+                    ""
+                )
+                ready = (data == "Arduino Started")
         self.logger.info("Serial port %s opened", self.device)
         return ser
 
@@ -212,7 +221,99 @@ class Server(object):  # pylint: disable=too-many-instance-attributes
         Main code for server implem.
         """
         # Open connection to the Serial device
-        ser = self.open_serial()
+        self.ser = self._open_serial()
+        # Bind socket to listening port
+        # Let's go for ever
+        self.running = True
+        self.on_start()
+        while self.running:
+            # Forward data comming from serial device to connected clients
+            # still connected
+            try:
+                self.arduino.acquire()
+                while self.ser.in_waiting and self.running:
+                    data = self.ser.readline()
+                    self.on_message_received(data.decode())
+                self.arduino.release()
+            except OSError:
+                self.arduino.release()
+                self.logger.exception("Error in communication to arduino")
+                self.ser.close()
+                self.ser = self._open_serial()
+            time.sleep(0.01)
+        self.on_stop()
+
+    def stop(self):
+        """Stop listener."""
+        self.running = False
+
+
+class SockServer(ArduinoLink):  # pylint: disable=too-many-instance-attributes
+    """TCP gateway to arduino via serial connection."""
+
+    # pylint: disable=too-many-arguments
+    def __init__(self, address='', port=9999, listen=5,
+                 device='/dev/ttyACM0', baud=9600):
+        """Create Server class instance.
+
+        @param port Listeing port
+        @param listen Waiting connection queue size
+        @param device Port serial port to communicate with the arduino
+        @param baud Serial baud rate
+        """
+        
+        ArduinoLink.__init__(self, device, baud)        
+        self.sockets = []    # Connected clients socket list
+
+        self.address = address
+        self.port = port
+        self.listen = listen
+
+        # Creating server
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Use socket as non blocking
+        self.socket.setblocking(0)
+
+    def on_message_received(self, message):
+        """Send data to connected clients."""
+        if len(self.sockets) <= 1:
+            return
+        try:
+            _, write, _ = select.select(self.sockets, self.sockets, [])
+
+            for sock in write:
+                if sock != self.socket and message:
+                    sock.send(message.encode())
+        except select.error:
+            return
+        except socket.error:
+            return
+
+    def _manage_client_request(self, sock):
+        """Manage requests from TCP client."""
+        try:
+            data = socket_receive(
+                sock
+            ).replace("\n", "").replace("\r", "")
+            if data:
+                lines = self.send_request(data)
+                for line in lines:
+                    sock.send(line.encode())
+
+            sock.close()
+            # Remove client socket from the list of connected clients
+            self.sockets.remove(sock)
+            self.logger.debug("TCP-CLIENT.disconnect: ")
+
+        except socket.error:
+            self.logger.exception("socket error")
+            self.sockets.remove(sock)
+            self.arduino.release()
+
+    def _tcp_listener(self):
+        """TCP Listener daemon
+        """
         # Bind socket to listening port
         self.socket.bind((self.address, self.port))
         # Start listeing with the proper Q size
@@ -222,11 +323,15 @@ class Server(object):  # pylint: disable=too-many-instance-attributes
         # Add server socket to socket list
         self.sockets.append(self.socket)
         # Let's go for ever
-        while True:
+        while self.running:
             # Let's check for new connections
             try:
-                read_ready, _, _ = select.select(self.sockets,
-                                                 self.sockets, [])
+                read_ready, _, _ = select.select(
+                    self.sockets,
+                    self.sockets,
+                    [],
+                    1
+                )
             except select.error:
                 self.logger.exception("SELECT error")
                 break
@@ -244,8 +349,12 @@ class Server(object):  # pylint: disable=too-many-instance-attributes
 
             # Let's check if some clients are sending request
             try:
-                read_ready, _, _ = select.select(self.sockets,
-                                                 self.sockets, [])
+                read_ready, _, _ = select.select(
+                    self.sockets,
+                    self.sockets,
+                    [],
+                    1
+                )
             except select.error:
                 self.logger.exception("SELECT error")
                 break
@@ -255,32 +364,38 @@ class Server(object):  # pylint: disable=too-many-instance-attributes
 
             for sock in read_ready:
                 if sock != self.socket:
-                    self.manage_client_request(sock, ser)
+                    self._manage_client_request(sock)
+            time.sleep(0.01)
 
-            # At least,
-            # Forward data comming from serial device to connected clients
-            # still connected
-            while ser.in_waiting:
-                data = ser.readline()
-                self.send_to_clients(data)
+    def on_start(self):
+        """Run server.
+
+        Main code for server implem.
+        """
+        tcp_listener = threading.Thread(target=self._tcp_listener)
+        tcp_listener.start()
 
 
 def usage():
     """Display usage and exit."""
-    print "usage: " + sys.argv[0] + \
-        " [-a ADDRESS]" + \
-        " [-p PORT]" + \
-        " [-d DEVICE]" + \
-        " [-b BAUD-RATE]" + \
-        " [-v]" + \
+    print(
+        "usage: " + sys.argv[0] +
+        " [-a ADDRESS]"
+        " [-p PORT]"
+        " [-d DEVICE]"
+        " [-b BAUD-RATE]"
+        " [-v]"
         " [-h]"
-    print "\t-a: listening address. default=" + ADDRESS + " *=all"
-    print "\t-p: listeing port default=" + str(PORT)
-    print "\t-d: serial device default=" + DEVICE
-    print "\t-b: serial device baudrate default=" + str(BAUD_RATE)
-    print "\t-v: vebose mode (note: this paramter is overloaded by " + \
+    )
+    print("\t-a: listening address. default=" + ADDRESS + " *=all")
+    print("\t-p: listeing port default=" + str(PORT))
+    print("\t-d: serial device default=" + DEVICE)
+    print("\t-b: serial device baudrate default=" + str(BAUD_RATE))
+    print(
+        "\t-v: vebose mode (note: this paramter is overloaded by "
         "/etc/arduino_controller/logs.conf when exists)"
-    print "\t-h: this text"
+    )
+    print("\t-h: this text")
     sys.exit(1)
 
 
@@ -329,9 +444,29 @@ def start_server():
     logging.info("    Listeing=%s", ADDRESS)
     logging.info("    TCP Port=%d", PORT)
 
-    server = Server(ADDRESS, PORT, QUEUE_SIZE, DEVICE, BAUD_RATE)
-    server.run()
+    server = SockServer(ADDRESS, PORT, QUEUE_SIZE, DEVICE, BAUD_RATE)
+    server.start()
+    try:
+        server.join()
+    except KeyboardInterrupt:
+        server.stop()
+
+
+class BasicReceiver(ArduinoLink):
+
+    def on_message_received(self, message):
+        self.logger.info("message received: %s", message)
 
 
 if __name__ == "__main__":
     start_server()
+
+    # logging.basicConfig(level=logging.DEBUG)
+    # srv = BasicReceiver()
+    # srv.start()
+    # while not srv.running:
+    #     time.sleep(0.01)
+    # print("Sending request")
+    # print(srv.send_request("V"))
+    # time.sleep(30)
+    # srv.stop()

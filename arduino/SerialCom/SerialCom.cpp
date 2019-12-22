@@ -44,6 +44,11 @@ SerialCom::SerialCom(HardwareSerial *hws){
         this->hws=hws;
         this->mySerial=hws;
 }
+SerialCom::SerialCom(Stream *hws){
+        this->isHW=1;
+        this->hws=hws;
+        this->mySerial=hws;
+}
 
 
 
@@ -53,6 +58,7 @@ void SerialCom::begin(uint16_t baud){
         }else{
                 this->sws->begin(baud);
         }
+        this->println("Arduino Started");
 }
 
 

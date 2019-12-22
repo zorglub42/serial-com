@@ -47,10 +47,11 @@ SerialCom(SoftwareSerial *);
 SerialCom(NewSoftSerial *);
     #endif
     #endif
-SerialCom(HardwareSerial *);
-void begin(uint16_t baud);
-void handleSerialCom();
-virtual size_t write(uint8_t);
+    SerialCom(HardwareSerial *);
+    SerialCom(Stream *);
+    void begin(uint16_t baud);
+    void handleSerialCom();
+    virtual size_t write(uint8_t);
 
 
 private:
