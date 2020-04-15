@@ -46,7 +46,7 @@ SerialCom::SerialCom(HardwareSerial *hws){
 }
 SerialCom::SerialCom(Stream *hws){
         this->isHW=1;
-        this->hws=hws;
+        this->hws=(HardwareSerial*)hws;
         this->mySerial=hws;
 }
 

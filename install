@@ -6,5 +6,6 @@ cd serial-com/sock_server
 [ -f /etc/init.d/arduino-controller ] && update-rc.d -f arduino-controller remove
 cp -r * /
 update-rc.d arduino-controller defaults
+pip3 install pyserial
 service arduino-controller start
 
